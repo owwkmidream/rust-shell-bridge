@@ -1,0 +1,6 @@
+/target/
+/deploy/
+/worker-dll/target/
+/worker-dll/Cargo.lock
+*.pdb
+Thumbs.db
