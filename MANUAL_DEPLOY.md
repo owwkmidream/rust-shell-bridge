@@ -85,6 +85,8 @@ root_menu_text=Iobit Unlocker快捷操作
 unlock_menu_text=解锁
 delete_menu_text=解锁并删除
 debug_log=0
+unlock_force_fallback=0
+delete_force_fallback=0
 ```
 
 说明：
@@ -93,6 +95,8 @@ debug_log=0
 - `unlock_menu_text`：子菜单“解锁”
 - `delete_menu_text`：子菜单“解锁并删除”
 - `debug_log`：是否写详细调试日志，`0` 为关闭，`1` 为开启
+- `unlock_force_fallback`：解锁失败后是否自动回退到 `Force`，默认 `0`
+- `delete_force_fallback`：删除失败后是否自动回退到 `Force`，默认 `0`
 
 修改这个配置文件后，不需要重新编译。
 

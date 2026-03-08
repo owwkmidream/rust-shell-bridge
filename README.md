@@ -183,6 +183,8 @@ root_menu_text=Iobit Unlocker快捷操作
 unlock_menu_text=解锁
 delete_menu_text=解锁并删除
 debug_log=0
+unlock_force_fallback=0
+delete_force_fallback=0
 ```
 
 说明：
@@ -191,6 +193,8 @@ debug_log=0
 - `unlock_menu_text`：子菜单“解锁”
 - `delete_menu_text`：子菜单“解锁并删除”
 - `debug_log`：是否输出详细调试日志，`0` 关闭，`1` 开启
+- `unlock_force_fallback`：解锁在 `Normal` 失败后是否继续回退到 `Force`，默认 `0`
+- `delete_force_fallback`：删除在 `Normal` 失败后是否继续回退到 `Force`，默认 `0`
 
 只改配置文件即可，不需要重新编译。
 
@@ -201,6 +205,8 @@ debug_log=0
 - 成功不弹窗
 - 失败才弹错误框
 - 需要重启完成的情况默认也不额外提示
+- 驱动调用默认只使用 `Normal` 模式
+- 是否在失败后回退到更激进的 `Force/Advanced` 模式，由配置项显式控制，默认关闭
 
 把 `debug_log=1` 后，会在系统临时目录写日志文件：
 

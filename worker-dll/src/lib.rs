@@ -13,7 +13,7 @@ use std::{
 use common::{
     log_debug, log_event, read_menu_text_config, read_request_file, result_path_for_request,
     to_wide_null, unlocker_dll_path_for_dir, write_result_file, BridgeAction, FailedPathResult,
-    HelperRequest, HelperResult,
+    HelperRequest, HelperResult, MenuTextConfig,
 };
 use windows::Win32::{
     Foundation::{FreeLibrary, HMODULE},
@@ -27,7 +27,6 @@ type DriverUnlockFileFn = unsafe extern "system" fn(PCWSTR, PCWSTR, u32, u32, *m
 
 const DRIVER_OPTION_NORMAL: u32 = 0;
 const DRIVER_OPTION_FORCE: u32 = 4;
-const ERROR_INVALID_PARAMETER_WIN32: u32 = 87;
 
 #[no_mangle]
 pub unsafe extern "system" fn RunBridgeRequestW(request_path: PCWSTR) -> u32 {
@@ -62,7 +61,8 @@ fn run_request(request_path: PCWSTR) -> Result<(), String> {
     let deploy_dir = current_exe
         .parent()
         .ok_or_else(|| "worker current exe has no parent directory".to_string())?;
-    let debug_log = read_menu_text_config(deploy_dir).debug_log;
+    let menu_config = read_menu_text_config(deploy_dir);
+    let debug_log = menu_config.debug_log;
 
     log_debug(
         debug_log,
@@ -75,7 +75,7 @@ fn run_request(request_path: PCWSTR) -> Result<(), String> {
         ),
     );
 
-    let driver = DriverBridge::load(deploy_dir, debug_log)?;
+    let driver = DriverBridge::load(deploy_dir, &menu_config)?;
     let outcome = driver.execute(&request)?;
     write_result_file(&result_path, &outcome)
         .map_err(|error| format!("worker failed to write result file: {error}"))?;
@@ -113,10 +113,13 @@ struct DriverBridge {
     driver_stop: DriverStopFn,
     driver_unlock_file: DriverUnlockFileFn,
     debug_log: bool,
+    unlock_force_fallback: bool,
+    delete_force_fallback: bool,
 }
 
 impl DriverBridge {
-    fn load(deploy_dir: &Path, debug_log: bool) -> Result<Self, String> {
+    fn load(deploy_dir: &Path, menu_config: &MenuTextConfig) -> Result<Self, String> {
+        let debug_log = menu_config.debug_log;
         let dll_path = unlocker_dll_path_for_dir(deploy_dir);
         if !dll_path.is_file() {
             return Err(format!(
@@ -155,6 +158,8 @@ impl DriverBridge {
             driver_stop,
             driver_unlock_file,
             debug_log,
+            unlock_force_fallback: menu_config.unlock_force_fallback,
+            delete_force_fallback: menu_config.delete_force_fallback,
         })
     }
 
@@ -180,26 +185,23 @@ impl DriverBridge {
     }
 
     fn execute_path(&self, action: BridgeAction, path: &Path) -> PathActionResult {
-        let mut last_result = PathActionResult {
-            status: ERROR_INVALID_PARAMETER_WIN32,
-            reboot_required: false,
-        };
-
-        for option_code in [DRIVER_OPTION_FORCE, DRIVER_OPTION_NORMAL] {
-            let current = self.call_driver(path, action, option_code);
-            last_result.reboot_required |= current.reboot_required;
-
-            if current.status == 0 {
-                return PathActionResult {
-                    status: 0,
-                    reboot_required: last_result.reboot_required,
-                };
-            }
-
-            last_result.status = current.status;
+        let normal = self.call_driver(path, action, DRIVER_OPTION_NORMAL);
+        if normal.status == 0 || !self.force_fallback_enabled(action) {
+            return normal;
         }
 
-        last_result
+        let force = self.call_driver(path, action, DRIVER_OPTION_FORCE);
+        PathActionResult {
+            status: force.status,
+            reboot_required: normal.reboot_required || force.reboot_required,
+        }
+    }
+
+    fn force_fallback_enabled(&self, action: BridgeAction) -> bool {
+        match action {
+            BridgeAction::Unlock => self.unlock_force_fallback,
+            BridgeAction::Delete => self.delete_force_fallback,
+        }
     }
 
     fn call_driver(&self, path: &Path, action: BridgeAction, option_code: u32) -> PathActionResult {

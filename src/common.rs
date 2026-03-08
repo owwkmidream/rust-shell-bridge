@@ -20,6 +20,8 @@ const DEFAULT_ROOT_MENU_TEXT: &str = "Iobit Unlocker快捷操作";
 const DEFAULT_UNLOCK_MENU_TEXT: &str = "解锁";
 const DEFAULT_DELETE_MENU_TEXT: &str = "解锁并删除";
 const DEFAULT_DEBUG_LOG: bool = false;
+const DEFAULT_UNLOCK_FORCE_FALLBACK: bool = false;
+const DEFAULT_DELETE_FORCE_FALLBACK: bool = false;
 
 static REQUEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -74,6 +76,8 @@ pub struct MenuTextConfig {
     pub unlock_menu_text: String,
     pub delete_menu_text: String,
     pub debug_log: bool,
+    pub unlock_force_fallback: bool,
+    pub delete_force_fallback: bool,
 }
 
 impl Default for MenuTextConfig {
@@ -83,6 +87,8 @@ impl Default for MenuTextConfig {
             unlock_menu_text: DEFAULT_UNLOCK_MENU_TEXT.to_string(),
             delete_menu_text: DEFAULT_DELETE_MENU_TEXT.to_string(),
             debug_log: DEFAULT_DEBUG_LOG,
+            unlock_force_fallback: DEFAULT_UNLOCK_FORCE_FALLBACK,
+            delete_force_fallback: DEFAULT_DELETE_FORCE_FALLBACK,
         }
     }
 }
@@ -170,6 +176,8 @@ fn parse_menu_text_config(content: &str) -> MenuTextConfig {
             "unlock_menu_text" => config.unlock_menu_text = value.to_string(),
             "delete_menu_text" => config.delete_menu_text = value.to_string(),
             "debug_log" => config.debug_log = parse_bool_value(value),
+            "unlock_force_fallback" => config.unlock_force_fallback = parse_bool_value(value),
+            "delete_force_fallback" => config.delete_force_fallback = parse_bool_value(value),
             _ => {}
         }
     }
