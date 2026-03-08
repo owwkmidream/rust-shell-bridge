@@ -5,7 +5,7 @@
 当前只保留两个子菜单：
 
 - `解锁`
-- `解锁并删除`
+- `删除`
 
 设计目标很明确：
 
@@ -63,7 +63,7 @@ Explorer(x64)
 
 1. `explorer.exe` 加载 shell 扩展 DLL。
 2. 右键菜单展示时，shell 扩展读取选中文件列表，并从同目录 `IObitUnlocker.exe` 提取菜单图标。
-3. 用户点击“解锁”或“解锁并删除”后，shell 扩展把批量路径写到临时 request 文件。
+3. 用户点击“解锁”或“删除”后，shell 扩展把批量路径写到临时 request 文件。
 4. shell 扩展用 `runas` 只启动一次 helper，因此整批操作只触发一次提权。
 5. helper 隐藏启动同目录官方 `IObitUnlocker.exe`，然后把 worker DLL 注入进去。
 6. worker 在官方宿主进程上下文内加载 `IObitUnlocker.dll`，直接调用其驱动相关导出。
@@ -181,7 +181,9 @@ cd D:\Owwk_Software\IObitUnlocker\rust-shell-bridge
 ```ini
 root_menu_text=Iobit Unlocker快捷操作
 unlock_menu_text=解锁
-delete_menu_text=解锁并删除
+delete_menu_text=删除
+unlock_menu_hotkey=F
+delete_menu_hotkey=D
 debug_log=0
 unlock_force_fallback=0
 delete_force_fallback=0
@@ -191,12 +193,16 @@ delete_force_fallback=0
 
 - `root_menu_text`：一级菜单文本
 - `unlock_menu_text`：子菜单“解锁”
-- `delete_menu_text`：子菜单“解锁并删除”
+- `delete_menu_text`：子菜单“删除”
+- `unlock_menu_hotkey`：子菜单“解锁”的快捷键，默认 `F`
+- `delete_menu_hotkey`：子菜单“删除”的快捷键，默认 `D`
 - `debug_log`：是否输出详细调试日志，`0` 关闭，`1` 开启
 - `unlock_force_fallback`：解锁在 `Normal` 失败后是否继续回退到 `Force`，默认 `0`
 - `delete_force_fallback`：删除在 `Normal` 失败后是否继续回退到 `Force`，默认 `0`
 
 只改配置文件即可，不需要重新编译。
+
+如果你想关闭快捷键，可以把 `unlock_menu_hotkey` 或 `delete_menu_hotkey` 设为 `none`、`off`、`0` 或 `-`。
 
 ## 日志与错误处理
 
@@ -222,7 +228,7 @@ delete_force_fallback=0
 
 ## 当前限制
 
-- 当前只实现“解锁”和“解锁并删除”
+- 当前只实现“解锁”和“删除”
 - 注册范围是当前用户 `HKCU`
 - 当前挂在 `AllFilesystemObjects`
 - 每次批量操作仍然需要一次 UAC，这是刻意保留的权限边界

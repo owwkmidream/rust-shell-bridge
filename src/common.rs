@@ -18,10 +18,12 @@ pub const LOG_FILE_NAME: &str = "iobitunlocker_shell_bridge.log";
 
 const DEFAULT_ROOT_MENU_TEXT: &str = "Iobit Unlocker快捷操作";
 const DEFAULT_UNLOCK_MENU_TEXT: &str = "解锁";
-const DEFAULT_DELETE_MENU_TEXT: &str = "解锁并删除";
+const DEFAULT_DELETE_MENU_TEXT: &str = "删除";
 const DEFAULT_DEBUG_LOG: bool = false;
 const DEFAULT_UNLOCK_FORCE_FALLBACK: bool = false;
 const DEFAULT_DELETE_FORCE_FALLBACK: bool = false;
+const DEFAULT_UNLOCK_MENU_HOTKEY: Option<char> = Some('F');
+const DEFAULT_DELETE_MENU_HOTKEY: Option<char> = Some('D');
 
 static REQUEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -78,6 +80,8 @@ pub struct MenuTextConfig {
     pub debug_log: bool,
     pub unlock_force_fallback: bool,
     pub delete_force_fallback: bool,
+    pub unlock_menu_hotkey: Option<char>,
+    pub delete_menu_hotkey: Option<char>,
 }
 
 impl Default for MenuTextConfig {
@@ -89,6 +93,8 @@ impl Default for MenuTextConfig {
             debug_log: DEFAULT_DEBUG_LOG,
             unlock_force_fallback: DEFAULT_UNLOCK_FORCE_FALLBACK,
             delete_force_fallback: DEFAULT_DELETE_FORCE_FALLBACK,
+            unlock_menu_hotkey: DEFAULT_UNLOCK_MENU_HOTKEY,
+            delete_menu_hotkey: DEFAULT_DELETE_MENU_HOTKEY,
         }
     }
 }
@@ -96,6 +102,14 @@ impl Default for MenuTextConfig {
 impl MenuTextConfig {
     pub fn dialog_title(&self) -> &str {
         &self.root_menu_text
+    }
+
+    pub fn unlock_menu_label(&self) -> String {
+        format_menu_label(&self.unlock_menu_text, self.unlock_menu_hotkey)
+    }
+
+    pub fn delete_menu_label(&self) -> String {
+        format_menu_label(&self.delete_menu_text, self.delete_menu_hotkey)
     }
 }
 
@@ -178,6 +192,8 @@ fn parse_menu_text_config(content: &str) -> MenuTextConfig {
             "debug_log" => config.debug_log = parse_bool_value(value),
             "unlock_force_fallback" => config.unlock_force_fallback = parse_bool_value(value),
             "delete_force_fallback" => config.delete_force_fallback = parse_bool_value(value),
+            "unlock_menu_hotkey" => config.unlock_menu_hotkey = parse_menu_hotkey_value(value),
+            "delete_menu_hotkey" => config.delete_menu_hotkey = parse_menu_hotkey_value(value),
             _ => {}
         }
     }
@@ -190,6 +206,34 @@ fn parse_bool_value(value: &str) -> bool {
         value.trim(),
         "1" | "true" | "True" | "TRUE" | "yes" | "Yes" | "YES" | "on" | "On" | "ON"
     )
+}
+
+fn parse_menu_hotkey_value(value: &str) -> Option<char> {
+    let trimmed = value.trim();
+    if trimmed.is_empty()
+        || matches!(
+            trimmed.to_ascii_lowercase().as_str(),
+            "0" | "none" | "off" | "disable" | "disabled" | "-"
+        )
+    {
+        return None;
+    }
+
+    trimmed.chars().next()
+}
+
+fn format_menu_label(text: &str, hotkey: Option<char>) -> String {
+    let escaped_text = text.replace('&', "&&");
+    match hotkey {
+        Some(hotkey) => {
+            let mut result = escaped_text;
+            result.push_str("(&");
+            result.push(hotkey.to_ascii_uppercase());
+            result.push(')');
+            result
+        }
+        None => escaped_text,
+    }
 }
 
 pub fn write_request_file(request: &HelperRequest) -> io::Result<PathBuf> {

@@ -188,8 +188,10 @@ impl IContextMenu_Impl for UnlockerShellExt_Impl {
         }
 
         let root_text_wide = to_wide_null(&menu_config.root_menu_text);
-        let unlock_text_wide = to_wide_null(&menu_config.unlock_menu_text);
-        let delete_text_wide = to_wide_null(&menu_config.delete_menu_text);
+        let unlock_label = menu_config.unlock_menu_label();
+        let delete_label = menu_config.delete_menu_label();
+        let unlock_text_wide = to_wide_null(&unlock_label);
+        let delete_text_wide = to_wide_null(&delete_label);
 
         let submenu = unsafe { CreatePopupMenu()? };
         let insert_result = unsafe {

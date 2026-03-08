@@ -83,7 +83,9 @@ cd D:\Owwk_Software\IObitUnlocker\rust-shell-bridge
 ```ini
 root_menu_text=Iobit Unlocker快捷操作
 unlock_menu_text=解锁
-delete_menu_text=解锁并删除
+delete_menu_text=删除
+unlock_menu_hotkey=F
+delete_menu_hotkey=D
 debug_log=0
 unlock_force_fallback=0
 delete_force_fallback=0
@@ -93,12 +95,16 @@ delete_force_fallback=0
 
 - `root_menu_text`：右键一级菜单名称
 - `unlock_menu_text`：子菜单“解锁”
-- `delete_menu_text`：子菜单“解锁并删除”
+- `delete_menu_text`：子菜单“删除”
+- `unlock_menu_hotkey`：子菜单“解锁”的快捷键，默认 `F`
+- `delete_menu_hotkey`：子菜单“删除”的快捷键，默认 `D`
 - `debug_log`：是否写详细调试日志，`0` 为关闭，`1` 为开启
 - `unlock_force_fallback`：解锁失败后是否自动回退到 `Force`，默认 `0`
 - `delete_force_fallback`：删除失败后是否自动回退到 `Force`，默认 `0`
 
 修改这个配置文件后，不需要重新编译。
+
+如果你想关闭快捷键，可以把 `unlock_menu_hotkey` 或 `delete_menu_hotkey` 设为 `none`、`off`、`0` 或 `-`。
 
 如果你想让注册表里 CLSID 的显示名同步更新，重新执行一次 `scripts\register.ps1` 即可。
 
